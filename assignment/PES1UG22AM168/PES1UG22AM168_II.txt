@@ -1,0 +1,53 @@
+# Mapper
+#!/usr/bin/env python3
+import sys
+import re
+
+# Function to sanitize words by removing non-alphabetic characters and converting to lowercase
+def clean_word(word):
+    return re.sub(r'[^a-zA-Z]', '', word).lower()
+
+for line in sys.stdin:
+    # Splitting the input line into document ID and content
+    doc_id, text = line.strip().split('\t')
+    # Tokenizing the content into words
+    words = text.split()
+    # Cleaning and emitting words
+    for word in words:
+        cleaned_word = clean_word(word)
+        if cleaned_word:  # Check if the word is not empty after cleaning
+            print(f'{cleaned_word}\t{doc_id}:1')
+
+#---------------------------------------------------------------------------------------
+
+# Reducer
+#!/usr/bin/env python3
+import sys
+from collections import defaultdict
+
+# Function to aggregate counts for each document ID
+def emit_current(current_word, doc_counts):
+    counts = ', '.join([f'{doc_id}:{count}' for doc_id, count in doc_counts.items()])
+    print(f'{current_word}: {counts}')
+
+current_word = None
+doc_counts = defaultdict(int)
+
+for line in sys.stdin:
+    word, doc_count = line.strip().split('\t', 1)
+    doc_id, count = doc_count.split(':')
+    count = int(count)
+
+    if current_word == word:
+        # If the word is the same as the previous one, accumulate the count
+        doc_counts[doc_id] += count
+    else:
+        if current_word:  # Emit results for the previous word
+            emit_current(current_word, doc_counts)
+        current_word = word
+        doc_counts = defaultdict(int)  # Resetting document counts
+        doc_counts[doc_id] = count
+
+# Emitting final word after the loop ends
+if current_word:
+    emit_current(current_word, doc_counts)

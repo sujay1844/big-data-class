@@ -1,0 +1,40 @@
+CREATE TABLE employees (
+    emp_id INT,
+    name STRING,
+    salary INT,
+    dept_id INT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+LOAD DATA
+LOCAL INPATH '~/big-data/employees.txt'
+OVERWRITE
+INTO TABLE employees;
+
+CREATE TABLE departments (
+    dept_id INT,
+    dept_name STRING,
+    location STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+LOAD DATA
+LOCAL INPATH '~/big-data/departments.txt'
+OVERWRITE
+INTO TABLE departments;
+
+CREATE TABLE filtered_employees AS
+SELECT * FROM employees
+WHERE salary <= 50000;
+
+CREATE TABLE joined_table AS
+SELECT e.emp_id, e.name, e.salary, d.dept_name, d.location
+FROM filtered_employees e
+JOIN departments d
+ON e.dept_id = d.dept_id;
+
+SELECT * FROM joined_table;

@@ -1,0 +1,7 @@
+students = LOAD '~/big-data/students.txt' USING PigStorage(',') AS (id: int, name: chararray, age: int);
+courses = LOAD '~/big-data/courses.txt' USING PigStorage(',') AS (id: int, course: chararray, grade: chararray);
+filtered_students = FILTER students BY age >= 20;
+joined_data = JOIN filtered_students BY id, courses BY id;
+ordered_data = ORDER joined_data BY grade DESC;
+STORE ordered_data INTO 'output.txt' USING PigStorage(',');
+DUMP ordered_data;

@@ -1,0 +1,59 @@
+# Mapper
+#!/usr/bin/env python3
+import sys
+
+# Initialize PageRank to 1 for each node; this is a simplistic approach.
+initialPageRank = 1.0
+
+for line in sys.stdin:
+    line = line.strip()
+    node, adj_list_str = line.split('\t', 1)
+    adj_list = adj_list_str.split()
+
+    # Emit the structure of the graph (node \t adjacency list).
+    # We prefix "Node:" to differentiate these lines from PageRank contributions.
+    print(f'{node}\tNode:{adj_list_str}')
+
+    # Total outgoing links for the node.
+    out_links_count = len(adj_list)
+
+    # Calculate and emit PageRank contributions to nodes.
+    for adj_node in adj_list:
+        pr_contribution = initialPageRank / out_links_count
+        print(f'{adj_node}\t{pr_contribution}')
+
+#---------------------------------------------------------------------------------------
+
+# Reducer
+#!/usr/bin/env python3
+import sys
+
+# Damping factor: probability at each page the "random surfer" will get bored and request another random page.
+damping_factor = 0.85
+
+# Collection to store adjacency lists emitted from the mapper.
+adj_lists = {}
+
+# Collection to store the incoming PageRank contributions for each node.
+incoming_pr = {}
+
+for line in sys.stdin:
+    line = line.strip()
+    node, value = line.split('\t', 1)
+
+    if value.startswith('Node:'):
+        # Extract and store the structure of the graph.
+        adj_list_str = value[5:]
+        adj_lists[node] = adj_list_str.split()
+    else:
+        # Aggregate PageRank contributions.
+        pr_contribution = float(value)
+        incoming_pr[node] = incoming_pr.get(node, 0) + pr_contribution
+
+# Iterating through nodes to calculate and emit the final PageRank after the iteration.
+for node, adj_list in adj_lists.items():
+    # Use "1 - damping_factor" for the random jump factor; +1 for initial simplicity.
+    pr = (1 - damping_factor) + damping_factor * incoming_pr.get(node, 0)
+    adj_list_str = ' '.join(adj_list)
+    print(f'{node}\t{pr:.3f}\t{adj_list_str}')
+
